@@ -44,6 +44,24 @@ function exit_with_failure() {
     exit_with_message "FAILURE: $1" 1
 }
 
+function install_pkg() {
+	dpkg -s $1 >> ${INSTALL_LOG} 2>&1
+
+	if [ $? -ne 0 ]; then
+        echo "Installing $1 using apt-get"
+        apt-get install $1 -y >> ${INSTALL_LOG} 2>&1
+	fi
+}
+
+function remove_pkg() {
+    dpkg -s $1 >> ${INSTALL_LOG} 2>&1
+
+    if [ $? -eq 0 ]; then
+        echo "Uninstalling $1 using apt-get"
+        apt-get remove $1 -y >> ${INSTALL_LOG} 2>&1
+    fi
+}
+
 function detect_operating_system() {
 
     echo "Detecting operating system:"
@@ -101,6 +119,7 @@ function remove_python() {
 
     # python
     if [ $OPERATING_SYSTEM == "DEBIAN" ]; then
+        remove_pkg python3-distutils
         echo "Uninstalling Python using apt-get"
         apt-get remove python3 -y &> ${INSTALL_LOG}
         apt-get autoremove -y &> ${INSTALL_LOG}
@@ -214,13 +233,18 @@ else
     echo "Python detected in ${PYTHON_PATH}"
 fi
 
+# Install distutils in Ubuntu, if not installed.
+if [ $OPERATING_SYSTEM == "DEBIAN" ]; then
+	install_pkg python3-distutils
+fi
+
 # Detect pip
 PIP_PATH=$( detect_pip )
 if [ "$PIP_PATH" == "" ]; then
     echo "Pip is not installed, installing Pip."
     install_pip $PYTHON_PATH
     PIP_PATH=$( detect_pip )
-    if [ "$PYTHON_PATH" == "" ]; then
+    if [ "$PIP_PATH" == "" ]; then
         exit_with_failure "Faild to install pip."
     fi
 fi
