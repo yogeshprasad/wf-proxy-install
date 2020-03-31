@@ -45,12 +45,12 @@ function exit_with_failure() {
 }
 
 function install_pkg() {
-	dpkg -s $1 >> ${INSTALL_LOG} 2>&1
+    dpkg -s $1 >> ${INSTALL_LOG} 2>&1
 
-	if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         echo "Installing $1 using apt-get"
         apt-get install $1 -y >> ${INSTALL_LOG} 2>&1
-	fi
+    fi
 }
 
 function remove_pkg() {
